@@ -5,7 +5,7 @@ from unittest import skip
 from django.test import TestCase
 from django.contrib.auth.models import User
 
-from .models import Tweet
+from .models import Tweet, Comment
 
 '''
 개별사용자 기능
@@ -58,7 +58,9 @@ class JackTest(TestCase):
 
 class LikeTest(TestCase):
     like_url_fmt = '/jack/like/%d'
+    like_list_url_fmt = '/jack/likers/%d'
     detail_url_fmt = '/jack/%d'
+    comment_url_fmt = '/jack/%d/comment'
 
     def setUp(self):
         self.a_user = User.objects.create_user('test1', 'test1@test.com', 'password')
@@ -112,19 +114,66 @@ class LikeTest(TestCase):
         self.assertEqual(tweet.like, 0)
 
     def test_remove_all_like_from_deleted_user(self):
-        user1_tweet = self._make_tweet(self.a_user)
-        self.client.login(username=self.a_user.username, password='password')
-        response = self.client.post(self.like_url_fmt % user1_tweet.id)
-        self.assertEqual(response.status_code, 200)
-        user1_tweet = self._make_tweet(self.a_user)
-        response = self.client.post(self.like_url_fmt % user1_tweet.id)
-        self.assertEqual(response.status_code, 200)
-        response = self.client.post('/jack/bye/')
-        self.assertEqual(response.status_code, 200)
-        for tweet in Tweet.objects.all():
-            self.assertEqual(tweet.like, 0)
+        tweet1 = self._make_tweet(self.a_user)
+        tweet2 = self._make_tweet(self.a_user)
+        tweet3 = self._make_tweet(self.a_user)
 
-        # TODO: test for following case (v means like)
+        self.client.login(username=self.a_user.username, password='password')
+        self.client.post(self.like_url_fmt % tweet1.id)
+        self.client.post(self.like_url_fmt % tweet2.id)
+
+        self.client.login(username=self.other_user.username, password='password')
+        self.client.post(self.like_url_fmt % tweet2.id)
+        self.client.post(self.like_url_fmt % tweet3.id)
+
         #    T1 T2 T3
         # U1  v  v
         # U2     v  v
+
+        response = self.client.post('/jack/bye/')
+        self.assertEqual(response.status_code, 200)
+        for tweet in Tweet.objects.filter(id__in=[tweet1.id, tweet2.id]):
+            self.assertEqual(tweet.like, 1)
+        for tweet in Tweet.objects.filter(id__in=[tweet3.id]):
+            self.assertEqual(tweet.like, 0)
+
+        # TODO: likers list up
+
+    def test_likers_list(self):
+        tweet1 = self._make_tweet(self.a_user)
+        response = self.client.get(self.like_list_url_fmt % tweet1.id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content), [])
+
+        self.client.login(username=self.a_user.username, password='password')
+        self.client.post(self.like_url_fmt % tweet1.id)
+        response = self.client.get(self.like_list_url_fmt % tweet1.id)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(json.loads(response.content), [{'username':self.a_user.username,
+                                                         'user_id':self.a_user.id}])
+
+        self.client.login(username=self.other_user.username, password='password')
+        self.client.post(self.like_url_fmt % tweet1.id)
+        response = self.client.get(self.like_list_url_fmt % tweet1.id)
+        self.assertEqual(sorted(json.loads(response.content), key=lambda u: u['user_id']), [
+            {'username':self.a_user.username,
+             'user_id':self.a_user.id},
+            {'username':self.other_user.username,
+             'user_id':self.other_user.id},
+        ])
+
+    # * comment list
+    # TODO: tweet-detail - comment list
+
+    def test_comment_to_tweet(self):
+        # * comment
+        tweet1 = self._make_tweet(self.a_user)
+        response = self.client.post(self.comment_url_fmt % tweet1.id, {'text': 'test comment'})
+        self.assertEqual(Comment.objects.all().exists(), False)
+
+
+        self.client.login(username=self.a_user, password='password')
+        response = self.client.post(self.comment_url_fmt % tweet1.id, {'text': 'test comment'})
+        self.assertEqual(response.status_code, 200)
+        comment = tweet1.comment_set.get()
+        self.assertEqual(comment.text, 'test comment')

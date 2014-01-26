@@ -1,10 +1,21 @@
 import json
 
+from django.contrib.auth.models import User
 from django.db.models import F
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseBadRequest
 
-from .models import Tweet
+from .models import Tweet, Comment
+
+import functools
+def authorize(view):
+    @functools.wraps(view)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated():
+            return HttpResponseUnauthorized()
+        return view(request, *args, **kwargs)
+    return wrapper
+
 
 
 # Create your views here.
@@ -38,9 +49,8 @@ class HttpResponseUnauthorized(HttpResponse):
         super(HttpResponseUnauthorized, self).__init__()
         self.status_code = 401
 
+@authorize
 def like_process(request, tweet_id):
-    if not request.user.is_authenticated():
-        return HttpResponseUnauthorized()
     tweet = Tweet.objects.select_for_update().get(id=tweet_id)
     if request.POST.get('delete'):
         return _like_delete(request.user, tweet)
@@ -66,3 +76,13 @@ def bye_user(request):
     request.user.save()
     Tweet.objects.filter(likers=request.user).update(like=F('like') - 1)
     return HttpResponse('Bye')
+
+def likers(request, tweet_id):
+    likers = User.objects.filter(my_likes=tweet_id)
+    likers = [{'username': user.username, 'user_id': user.id} for user in likers]
+    return HttpResponse(json.dumps(likers))
+
+@authorize
+def create_comment(request, tweet_id):
+    Comment.objects.create(tweet_id=tweet_id, writer=request.user, text=request.POST['text'])
+    return HttpResponse('')
