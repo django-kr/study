@@ -86,3 +86,7 @@ def likers(request, tweet_id):
 def create_comment(request, tweet_id):
     Comment.objects.create(tweet_id=tweet_id, writer=request.user, text=request.POST['text'])
     return HttpResponse('')
+
+def comment_list(request, tweet_id):
+    comments = Comment.objects.filter(tweet_id=tweet_id).order_by('id').values()
+    return HttpResponse(json.dumps(list(comments)))
