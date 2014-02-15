@@ -1,6 +1,9 @@
 Django==1.6
 Pygments==1.6
+argparse==1.2.1
 bpython==0.12
+gorun==1.7
 ipdb==0.8
 ipython==1.1.0
+pyinotify==0.9.3
 wsgiref==0.1.2
