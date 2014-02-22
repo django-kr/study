@@ -1,5 +1,5 @@
 DIRECTORIES = (
-    ('./', './manage.py test'),
+    ('.', './manage.py test'),
 )
 
 IGNORE_EXTENSIONS = ('swp', 'pyc')
