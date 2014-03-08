@@ -1,9 +1,13 @@
 import string
 import random
 
-from djack.models import JackUser as User
+from django.contrib.auth import get_user_model
 
 from ..models import Tweet
+
+
+User = get_user_model()
+
 
 class TestHelper(object):
     entire_tweet_list_url = '/jack/'
@@ -14,6 +18,9 @@ class TestHelper(object):
     comment_url_fmt = '/jack/%d/comment/new'
     comment_list_url_fmt = '/jack/%d/comment'
     bye_url = '/jack/bye/'
+    follow_url_fmt = '/jack/follow/%d'
+    unfollow_url_fmt = '/jack/unfollow/%d'
+    block_url_fmt = '/jack/block/%d'
 
     def _make_tweet(self, user, text='default text'):
         return Tweet.objects.create(writer=user, text=text)

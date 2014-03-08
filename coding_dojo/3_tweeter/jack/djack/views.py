@@ -1,13 +1,17 @@
+import functools
 import json
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.db.models import F
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseBadRequest
 
 from .models import Tweet, Comment
 
-import functools
+
+User = get_user_model()
+
+
 def authorize(view):
     @functools.wraps(view)
     def wrapper(request, *args, **kwargs):
@@ -90,3 +94,24 @@ def create_comment(request, tweet_id):
 def comment_list(request, tweet_id):
     comments = Comment.objects.filter(tweet_id=tweet_id).order_by('id').values()
     return HttpResponse(json.dumps(list(comments)))
+
+@authorize
+def follow(request, user_id):
+    you = User.objects.get(pk=user_id)
+    if you.stalkers.filter(id=request.user.id).exists():
+        return HttpResponse(json.dumps({"result": "Blocked"}))
+    request.user.following.add(you)
+    return HttpResponse(json.dumps({"result": "OK"}))
+
+@authorize
+def unfollow(request, user_id):
+    request.user.following.remove(User.objects.get(pk=user_id))
+    return HttpResponse('OK')
+
+@authorize
+def block(request, stalker_id):
+    stalker = User.objects.get(pk=stalker_id)
+    request.user.stalkers.add(stalker)
+    request.user.following.remove(stalker)
+    request.user.follower.remove(stalker)
+    return HttpResponse("BLOCK")

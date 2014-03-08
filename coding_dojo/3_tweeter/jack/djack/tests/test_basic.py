@@ -3,10 +3,15 @@ import json
 from unittest import skip
 
 from django.test import TestCase
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
 from ..models import Tweet, Comment
 from . import TestHelper, refresh
+
+
+User = get_user_model()
+
+
 '''
 개별사용자 기능
 list

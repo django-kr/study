@@ -1,10 +1,13 @@
 import json
 
-from djack.models import JackUser as User
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from ..models import Tweet, Comment
 from . import TestHelper, refresh
+
+
+User = get_user_model()
 
 
 class LikeTest(TestCase, TestHelper):

@@ -1,9 +1,12 @@
 import unittest
 
-from djack.models import JackUser as User
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 
 from . import TestHelper
+
+
+User = get_user_model()
 
 
 class TestHelperTest(TestCase):

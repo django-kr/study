@@ -2,9 +2,12 @@
 from django.db import models
 from django.contrib.auth.models import User, AbstractUser
 
-# TODO: need to be implemented base on AbstractUser
-# set AUTH_USER_MODEL value to JackUser after that change
-JackUser = User
+
+class JackUser(AbstractUser):
+    following = models.ManyToManyField('JackUser', related_name='follower')
+    stalkers = models.ManyToManyField('JackUser', related_name='victim')
+
+User = JackUser
 
 # Create your models here.
 class Post(models.Model):

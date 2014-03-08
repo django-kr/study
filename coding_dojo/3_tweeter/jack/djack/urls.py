@@ -10,4 +10,7 @@ urlpatterns = patterns('djack',
     url(r'^likers/(?P<tweet_id>\d+)/?', 'views.likers'),
     url(r'^(?P<tweet_id>\d+)/comment/new/?', 'views.create_comment'),
     url(r'^(?P<tweet_id>\d+)/comment/?', 'views.comment_list'),
+    url(r'^follow/(?P<user_id>\d+)/?', 'views.follow'),
+    url(r'^unfollow/(?P<user_id>\d+)/?', 'views.unfollow'),
+    url(r'^block/(?P<stalker_id>\d+)/?', 'views.block'),
 )

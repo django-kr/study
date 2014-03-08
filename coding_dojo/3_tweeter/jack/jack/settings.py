@@ -82,5 +82,5 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-#AUTH_USER_MODEL = 'django.contrib.auth.models.User'
-JACK_USER_MODEL = 'django.contrib.auth.models.User'
+AUTH_USER_MODEL = 'djack.JackUser'
+#JACK_USER_MODEL = 'django.contrib.auth.models.User'
