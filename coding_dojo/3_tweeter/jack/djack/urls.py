@@ -13,4 +13,8 @@ urlpatterns = patterns('djack',
     url(r'^follow/(?P<user_id>\d+)/?', 'views.follow'),
     url(r'^unfollow/(?P<user_id>\d+)/?', 'views.unfollow'),
     url(r'^block/(?P<stalker_id>\d+)/?', 'views.block'),
+    url(r'^unblock/(?P<stalker_id>\d+)/?', 'views.unblock'),
+    url(r'^following/(?P<user_id>\d+)/?', 'views.following'),
+    url(r'^follower/(?P<user_id>\d+)/?', 'views.follower'),
+    url(r'^blocked/?', 'views.blocked'),
 )

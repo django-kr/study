@@ -97,10 +97,12 @@ def comment_list(request, tweet_id):
 
 @authorize
 def follow(request, user_id):
-    you = User.objects.get(pk=user_id)
-    if you.stalkers.filter(id=request.user.id).exists():
+    target = User.objects.get(pk=user_id)
+    me = request.user
+    if ( target.stalkers.filter(id=me.id).exists() or
+         me.stalkers.filter(id=target.id).exists() ):
         return HttpResponse(json.dumps({"result": "Blocked"}))
-    request.user.following.add(you)
+    request.user.following.add(target)
     return HttpResponse(json.dumps({"result": "OK"}))
 
 @authorize
@@ -115,3 +117,30 @@ def block(request, stalker_id):
     request.user.following.remove(stalker)
     request.user.follower.remove(stalker)
     return HttpResponse("BLOCK")
+
+@authorize
+def unblock(request, stalker_id):
+    stalker = User.objects.get(pk=stalker_id)
+    request.user.stalkers.remove(stalker)
+    return HttpResponse("UNBLOCK")
+
+
+#TODO : should be refactored below code blocks
+def following(request, user_id):
+    follower = User.objects.get(pk=user_id)
+    followings = follower.following.all().values('id','username')
+    followings = json.dumps(list(followings))
+    return HttpResponse(followings)
+
+def follower(request, user_id):
+    following = User.objects.get(pk=user_id)
+    followers = following.follower.all().values('id','username')
+    followers = json.dumps(list(followers))
+    return HttpResponse(followers)
+
+@authorize
+def blocked(request):
+    blocker = request.user
+    stalkers = blocker.stalkers.all().values('id','username')
+    stalkers = json.dumps(list(stalkers))
+    return HttpResponse(stalkers)

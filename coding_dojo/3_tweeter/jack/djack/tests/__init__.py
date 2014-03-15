@@ -21,6 +21,10 @@ class TestHelper(object):
     follow_url_fmt = '/jack/follow/%d'
     unfollow_url_fmt = '/jack/unfollow/%d'
     block_url_fmt = '/jack/block/%d'
+    unblock_url_fmt = '/jack/unblock/%d'
+    following_list_url_fmt = '/jack/following/%d'
+    follower_list_url_fmt = '/jack/follower/%d'
+    block_list_url = '/jack/blocked/'
 
     def _make_tweet(self, user, text='default text'):
         return Tweet.objects.create(writer=user, text=text)
