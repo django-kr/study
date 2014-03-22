@@ -2,7 +2,7 @@ import functools
 import json
 
 from django.contrib.auth import get_user_model
-from django.db.models import F
+from django.db.models import F, Q
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseBadRequest
 
@@ -144,3 +144,16 @@ def blocked(request):
     stalkers = blocker.stalkers.all().values('id','username')
     stalkers = json.dumps(list(stalkers))
     return HttpResponse(stalkers)
+
+def timeline(request, user_id):
+    tweets = Tweet.objects.filter(
+        Q(writer__follower=user_id) |
+        Q(likers__follower=user_id) |
+        Q(writer=user_id) |
+        Q(likers=user_id)
+    )
+    lst = [
+        {"id":tweet.id, 'writer_id': tweet.writer.id, 'text': tweet.text}
+        for tweet in tweets
+    ]
+    return HttpResponse(json.dumps(lst))

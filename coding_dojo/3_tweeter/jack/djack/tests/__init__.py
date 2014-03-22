@@ -25,6 +25,7 @@ class TestHelper(object):
     following_list_url_fmt = '/jack/following/%d'
     follower_list_url_fmt = '/jack/follower/%d'
     block_list_url = '/jack/blocked/'
+    timeline_url_fmt = '/jack/timeline/%d'
 
     def _make_tweet(self, user, text='default text'):
         return Tweet.objects.create(writer=user, text=text)

@@ -5,8 +5,8 @@ o block(stalker)
 o unblock(stalker)
 
 o follow-list(user)
-. follower-list(user)
-. block-list(self)
+o follower-list(user)
+o block-list(self)
 '''
 
 import json
@@ -100,6 +100,12 @@ class FollowTest(TestCase, TestHelper):
         self.assertEqual(resp.status_code, 200)
         self.assertNotIn(stalker, blocker.stalkers.all())
 
+    def _assert_ids_json_and_users(self, list_content, expected_users):
+        result_data = json.loads(list_content)
+        result_ids = set(map(lambda x: x['id'], result_data))
+        expect_ids = set(map(lambda x: x.id, expected_users))
+        self.assertEqual(result_ids, expect_ids)
+
     def test_following_list(self):
         follower = self.create_user('user1')
         following1 = self.create_user('user2')
@@ -112,11 +118,7 @@ class FollowTest(TestCase, TestHelper):
         resp = self.client.get(self.following_list_url_fmt % follower.id)
         self.assertEqual(resp.status_code, 200)
 
-        result_data = json.loads(resp.content)
-        # [ {'id': following1.id, ...}, {'id': following2.id, ... } ]
-        result_ids = sorted(map(lambda x: x['id'], result_data))
-        expect_ids = sorted([following1.id, following2.id])
-        self.assertEqual(result_ids, expect_ids)
+        self._assert_ids_json_and_users(resp.content, [following1, following2])
 
     def test_follower_list(self):
         following = self.create_user('user1')
@@ -133,12 +135,8 @@ class FollowTest(TestCase, TestHelper):
 
         self.assertEqual(resp.status_code, 200)
 
-        result_data = json.loads(resp.content)
-        # [ {'id': following1.id, ...}, {'id': following2.id, ... } ]
-        result_ids = sorted(map(lambda x: x['id'], result_data))
-        expect_ids = sorted([follower1.id, follower2.id])
-        self.assertEqual(result_ids, expect_ids)
-
+        self._assert_ids_json_and_users(resp.content, [follower1, follower2])
+        
     def test_block_list(self):
         blocker = self.create_user('user1')
         stalker1 = self.create_user('user2')
@@ -150,12 +148,7 @@ class FollowTest(TestCase, TestHelper):
 
         resp = self.client.get(self.block_list_url)
 
-        result_data = json.loads(resp.content)
-        # [ {'id': following1.id, ...}, {'id': following2.id, ... } ]
-        result_ids = sorted(map(lambda x: x['id'], result_data))
-        expect_ids = sorted([stalker1.id, stalker2.id])
-        self.assertEqual(result_ids, expect_ids)
-
+        self._assert_ids_json_and_users(resp.content, [stalker1, stalker2])
 
 
 
