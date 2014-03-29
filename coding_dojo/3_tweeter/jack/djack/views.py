@@ -5,9 +5,9 @@ from django.contrib.auth import get_user_model
 from django.db.models import F, Q
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseBadRequest
+from .helper import json_dumps
 
 from .models import Tweet, Comment
-
 
 User = get_user_model()
 
@@ -46,7 +46,8 @@ def detail_tweet(request, tweet_id):
         f.name: getattr(tweet, f.name) for f in tweet._meta.fields
         if not f.rel
     }
-    return HttpResponse(json.dumps(detail_dict))
+
+    return HttpResponse(json_dumps(detail_dict))
 
 class HttpResponseUnauthorized(HttpResponse):
     def __init__(self):
@@ -93,7 +94,7 @@ def create_comment(request, tweet_id):
 
 def comment_list(request, tweet_id):
     comments = Comment.objects.filter(tweet_id=tweet_id).order_by('id').values()
-    return HttpResponse(json.dumps(list(comments)))
+    return HttpResponse(json_dumps(list(comments)))
 
 @authorize
 def follow(request, user_id):
@@ -150,8 +151,10 @@ def timeline(request, user_id):
         Q(writer__follower=user_id) |
         Q(likers__follower=user_id) |
         Q(writer=user_id) |
-        Q(likers=user_id)
-    )
+        Q(likers=user_id) |
+        Q(comment__writer=user_id) |
+        Q(comment__writer__follower=user_id)
+    ).order_by('-id')
     lst = [
         {"id":tweet.id, 'writer_id': tweet.writer.id, 'text': tweet.text}
         for tweet in tweets

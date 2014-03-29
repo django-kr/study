@@ -20,23 +20,18 @@ class TimeLineTest(TestCase, TestHelper):
         tweet = self._make_tweet(following)
         self._make_tweet(unfollowing)
         
-        resp = self.client.get(self.timeline_url_fmt % follower.id)
-        
-        result_data = json.loads(resp.content)
+        result_data = self._get_timeline(follower)
         # [ {'id': tweet.id, 'writer_id': following.id, 'text': tweet.text} ]
-        self.assertEqual(len(result_data), 1)
-        self._assert_tweet_equal(result_data[0], tweet)
+        self._assert_tweets_equal(result_data, [tweet])
 
     def test_timeline_should_contains_my_own_posts(self):
         me = self.create_user('user1')
         tweet = self._make_tweet(me)
 
         self.client.login(**me.credential)
-        resp = self.client.get(self.timeline_url_fmt % me.id)
-        result_data = json.loads(resp.content)
+        result_data = self._get_timeline(me)
 
-        self.assertEqual(len(result_data), 1)
-        self._assert_tweet_equal(result_data[0], tweet)
+        self._assert_tweets_equal(result_data, [tweet])
 
     def test_timeline_should_contains_followings_liked_posts(self):
         #     
@@ -57,30 +52,51 @@ class TimeLineTest(TestCase, TestHelper):
         u4_tweet = self._make_tweet(u4)
         u4_tweet.likers.add(u5)
         
-        resp = self.client.get(self.timeline_url_fmt % u1.id)
-        result_data = json.loads(resp.content)
-        self.assertEqual(len(result_data), 1)
-        self._assert_tweet_equal(result_data[0], u3_tweet)
+        result_data = self._get_timeline(u1)
+        self._assert_tweets_equal(result_data, [u3_tweet])
 
         u1.following.add(u5)
-        resp = self.client.get(self.timeline_url_fmt % u1.id)
-        result_data = json.loads(resp.content)
-        self.assertEqual(len(result_data), 2)
+        result_data = self._get_timeline(u1)
+        self._assert_tweets_equal(result_data, [u4_tweet, u3_tweet])
 
-        resp = self.client.get(self.timeline_url_fmt % u2.id)
-        result_data = json.loads(resp.content)
-        self.assertEqual(len(result_data), 1)
-        self._assert_tweet_equal(result_data[0], u3_tweet)
+        result_data = self._get_timeline(u2)
+        self._assert_tweets_equal(result_data, [u3_tweet])
 
 
-    def test_timeline_should_contain_me_and_my_followings_commented_tweet(self):
-        # TODO
+    def test_timeline_should_contain_my_commented_tweet(self):
         # 1. 자신이 코멘트한 트윗
-        # 1. 팔로우한 사람이 코멘트한 트윗
-        # 1. 팔로우한 사람이 코멘트에 좋아요한 트윗 (X)
-        pass
+        #    u1 u2
+        #  t     o
+        #     c->
 
-    def _assert_tweet_equal(self, tweet_dict, tweet):
-        self.assertEqual(tweet_dict['id'], tweet.id)
-        self.assertEqual(tweet_dict['writer_id'], tweet.writer.id)
-        self.assertEqual(tweet_dict['text'], tweet.text)
+        u1 = self.create_user('u1')
+        u2 = self.create_user('u2')
+        u2_tweet = self._make_tweet(u2)
+        result_data = self._get_timeline(u1)
+        self.assertEqual(result_data, [])
+        
+        u1_comment = self._make_comment(u2_tweet, u1)
+        result_data = self._get_timeline(u1)
+
+        self._assert_tweets_equal(result_data, [u2_tweet])
+
+    def test_timeline_should_contain_my_followings_commented_tweet(self):
+        # 1. 팔로우한 사람이 코멘트한 트윗
+
+        #    u1->u2  u3
+        #  t          x
+
+        u1 = self.create_user('u1')
+        u2 = self.create_user('u2')
+        u3 = self.create_user('u3')
+        u1.following.add(u2)
+        u3_tweet = self._make_tweet(u3)
+
+        result_data = self._get_timeline(u1)
+        self.assertEqual(len(result_data), 0)
+
+        #    u1->u2  u3
+        #  t      c-> o
+        u2_comment = self._make_comment(u3_tweet, u2)
+        result_data = self._get_timeline(u1)
+        self._assert_tweets_equal(result_data, [u3_tweet])

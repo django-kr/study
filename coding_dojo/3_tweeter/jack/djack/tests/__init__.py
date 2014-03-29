@@ -1,9 +1,10 @@
 import string
 import random
+import json
 
 from django.contrib.auth import get_user_model
 
-from ..models import Tweet
+from ..models import Tweet, Comment
 
 
 User = get_user_model()
@@ -29,6 +30,23 @@ class TestHelper(object):
 
     def _make_tweet(self, user, text='default text'):
         return Tweet.objects.create(writer=user, text=text)
+
+    def _make_comment(self, parent_tweet, user, text='default text'):
+        return Comment.objects.create(writer=user, tweet=parent_tweet, text=text)
+
+    def _get_timeline(self, user):
+        resp = self.client.get(self.timeline_url_fmt % user.id)
+        return json.loads(resp.content)
+
+    def _assert_tweet_equal(self, tweet_dict, tweet):
+        self.assertEqual(tweet_dict['id'], tweet.id)
+        self.assertEqual(tweet_dict['writer_id'], tweet.writer.id)
+        self.assertEqual(tweet_dict['text'], tweet.text)
+
+    def _assert_tweets_equal(self, tweet_dicts, tweets):
+        self.assertEqual(len(tweet_dicts), len(tweets))
+        for tweet_dict, tweet in zip(tweet_dicts, tweets):
+            self._assert_tweet_equal(tweet_dict, tweet)
 
     @staticmethod
     def create_user(username=None):
