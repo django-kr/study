@@ -2,6 +2,8 @@
 from django.conf.urls import patterns, include, url
 
 urlpatterns = patterns('djack',
+    url(r'^signup/$', 'views.signup', name='signup'),
+    url(r'^activation/(?P<key>\w+)$', 'views.activation', name='activation'),
     url(r'^create/$', 'views.create'),
     url(r'^$', 'views.list_tweets'),
     url(r'^(?P<tweet_id>\d+)/?$', 'views.detail_tweet'),

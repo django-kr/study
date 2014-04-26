@@ -7,6 +7,7 @@ https://docs.djangoproject.com/en/1.6/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.6/ref/settings/
 """
+import datetime
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
@@ -89,3 +90,4 @@ TEMPLATE_DIRS = (
 
 AUTH_USER_MODEL = 'djack.JackUser'
 #JACK_USER_MODEL = 'django.contrib.auth.models.User'
+ACTIVATION_EXPIRE = datetime.timedelta(days=7)

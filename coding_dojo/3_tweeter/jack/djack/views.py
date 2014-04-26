@@ -1,13 +1,14 @@
 import functools
 import json
 
+from django.core import mail
 from django.contrib.auth import get_user_model
 from django.db.models import F, Q
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseBadRequest
 from .helper import json_dumps
 
-from .models import Tweet, Comment
+from .models import Tweet, Comment, SignupVerification
 
 User = get_user_model()
 
@@ -21,6 +22,27 @@ def authorize(view):
     return wrapper
 
 
+def signup(request):
+    username = request.POST.get('username')
+    email = request.POST.get('email')
+    pw = request.POST.get('password')
+    user = User.objects.create_user(username=username, email=email, password=pw)
+    user.is_active = False
+    user.save()
+    sv = SignupVerification.objects.create(user=user)
+    mail.send_mail('Verification please', 'click this verification link: .... %s' % sv.key,
+                   'quickndirty@test.com', [email])
+    return HttpResponse()
+
+
+def activation(request, key):
+    sv = SignupVerification.objects.get(key=key)
+    if sv.is_valid():
+        sv.user.is_active = True
+        sv.user.save()
+        return HttpResponse()
+    else:
+        return HttpResponseBadRequest()
 
 # Create your views here.
 def create(request):

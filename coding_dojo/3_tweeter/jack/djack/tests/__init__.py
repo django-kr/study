@@ -3,6 +3,7 @@ import random
 import json
 
 from django.contrib.auth import get_user_model
+from django.core.urlresolvers import reverse
 
 from ..models import Tweet, Comment
 
@@ -27,6 +28,7 @@ class TestHelper(object):
     follower_list_url_fmt = '/jack/follower/%d'
     block_list_url = '/jack/blocked/'
     timeline_url_fmt = '/jack/timeline/%d'
+    signup_url = reverse('signup')
 
     def _make_tweet(self, user, text='default text'):
         return Tweet.objects.create(writer=user, text=text)
